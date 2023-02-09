@@ -15,6 +15,7 @@ library(tmap)
 library(rmapshaper)
 library(fqadata)
 library(here)
+library(janitor)
 ```
 
 # When FQA Regions are States...
@@ -55,14 +56,7 @@ FQA_states <- states() %>%
     FQA_database == "West Virginia" ~ "west_virginia_2015",
     FQA_database == "Minnesota" ~ "minnesota_wetlands_2007",
     FQA_database == "Wyoming" ~ "wyoming_2017")) %>% 
-  mutate(Notes = NA) %>% 
-  mutate(Notes = case_when(FQA_database == "wyoming_wetlands_2017" ~ "Wetlands only",
-                           FQA_database == "minnesota_wetlands_2007" ~ "Wetlands only",
-                           FQA_database == "montana_2017" ~ "Wetlands only",
-                           FQA_database == "kansas_2014" ~ "Previously certified",
-                           FQA_database == "florida_2011" ~ "Designed for marsh habitat evaluation",
-                           FQA_database %in% c("delaware_2013") ~ "Approved with reservations. Use alternate database if posssible")) %>% 
-  select(FQA_database, Notes)
+  select(FQA_database)
 
 proj_crs <- st_crs(FQA_states)
 
@@ -101,8 +95,7 @@ ms <- counties(state = "Mississippi") %>%
   filter(!NAME %in% c("Pear River", "Stone", "George", "Hancock", "Harrison", "Jackson")) %>% 
   st_union %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mississippi_north_central_wetlands_2005") %>% 
-  mutate(Notes = "Wetlands only")
+  mutate(FQA_database = "mississippi_north_central_wetlands_2005")
 
 #exclude everglades
 south_florida <- counties(state = "Florida") %>% 
@@ -110,8 +103,7 @@ south_florida <- counties(state = "Florida") %>%
                      "Palm Beach", "Collier", "Broward", "Monroe", "Miami-Dade")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "florida_south_2009") %>% 
-  mutate(Notes = "Excluding Everglades")
+  mutate(FQA_database = "florida_south_2009")
 
 #exclude lake region
 chicago_region <- counties(state = c("Wisconsin", "Illinois", "Indiana", "Michigan")) %>% 
@@ -121,8 +113,7 @@ chicago_region <- counties(state = c("Wisconsin", "Illinois", "Indiana", "Michig
     NAME  == "Berrien") %>% 
     st_union() %>% 
     st_sf() %>% 
-    mutate(FQA_database = "chicago_region_2017") %>% 
-    mutate(Notes = NA)
+    mutate(FQA_database = "chicago_region_2017")
 
 #exclude everglades
 western_wa <- counties(state = "Washington") %>% 
@@ -132,8 +123,7 @@ western_wa <- counties(state = "Washington") %>%
                      "Clallam", "Jefferson", "Grays Harbor", "Pacific")) %>% 
       st_union() %>% 
       st_sf() %>% 
-      mutate(FQA_database = "western_washington_2013") %>% 
-      mutate(Notes = NA)
+      mutate(FQA_database = "western_washington_2013")
 
 eastern_wa <- counties(state = "Washington") %>% 
   filter(!NAME %in% c("Whatcom", "Skagit", "Snohomish", "King", "Pierce", 
@@ -148,15 +138,13 @@ eastern_wa_mt <- eastern_wa_eco %>%
   filter(NA_L3NAME != "Columbia Plateau") %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "eastern_washington_mountains_2013") %>% 
-  mutate(Notes = "Sites above lower treeline in East Cascades, Okanogan Highlands, Northern Rocky Mountains, and Blue Mountains.")
+  mutate(FQA_database = "eastern_washington_mountains_2013")
 
 eastern_wa_columbia_basin <- eastern_wa_eco %>% 
   filter(NA_L3NAME == "Columbia Plateau") %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "eastern_washington_columbia_basin_2013") %>% 
-  mutate(Notes = "Arid lands below the lower treeline")
+  mutate(FQA_database = "eastern_washington_columbia_basin_2013")
 ```
 
 # Ecoregion Level 3 FQA Lists and States
@@ -168,8 +156,7 @@ dakotas <- us_ecor_state %>%
   filter(US_L3NAME != "Middle Rockies") %>% 
   st_union %>% 
   st_sf() %>% 
-  mutate(FQA_database = "dakotas_excluding_black_hills_2017") %>% 
-  mutate(Notes = "Previously Certified")
+  mutate(FQA_database = "dakotas_excluding_black_hills_2017")
 ```
 
 # Ecoregion Level 3 FQA Lists--South East
@@ -181,8 +168,7 @@ appalachian_mtn <- us_ecor_state %>%
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "southeastern_mountains_2014") %>% 
-  mutate(Notes = "Wetlands Only")
+  mutate(FQA_database = "southeastern_mountains_2014")
 
 #check this one also
 coastal_plain_southeast <- us_ecor_state %>% 
@@ -190,32 +176,28 @@ coastal_plain_southeast <- us_ecor_state %>%
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "southeastern_plain_2014") %>% 
-  mutate(Notes = "Wetlands Only")
+  mutate(FQA_database = "southeastern_plain_2014")
 
 southern_coastal_plain <- us_ecor_state %>% 
   filter(US_L3CODE == "75") %>% 
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "southeastern_southern_coastal_plain_2014") %>% 
-  mutate(Notes = "Wetlands Only")
+  mutate(FQA_database = "southeastern_southern_coastal_plain_2014")
 
 interior_plateau <- us_ecor_state %>% 
   filter(US_L3CODE %in% c(70, 71, 72)) %>% 
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "southeastern_interior_plateau_2014") %>% 
-  mutate(Notes = "Wetlands Only")
+  mutate(FQA_database = "southeastern_interior_plateau_2014")
 
 piedmont_region <- us_ecor_state %>% 
   filter(US_L3CODE == "45") %>% 
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "southeastern_piedmont_2014") %>% 
-  mutate(Notes = "Wetlands Only")
+  mutate(FQA_database = "southeastern_piedmont_2014")
 ```
 
 # Ecoregion Level 3 FQA Lists -- mid-atlantic
@@ -226,8 +208,7 @@ pen_piedmont <- us_ecor_state %>%
   filter(STATE_NAME %in% c("New Jersey", "	Pennsylvania")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "pennsylvania_piedmont_2013") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "pennsylvania_piedmont_2013")
 
 mid_atl_ecor <- us_ecor_state %>% 
   filter(STATE_NAME %in% c("Delaware", "Maryland", "Pennsylvania", "Virginia", "West Virginia"))
@@ -236,36 +217,31 @@ mid_atl_coastal_plain <- mid_atl_ecor %>%
   filter(US_L3NAME %in% c("Middle Atlantic Coastal Plain", "Southeastern Plains")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mid_atlantic_coastal_plain_2012") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "mid_atlantic_coastal_plain_2012")
 
 mid_atl_pied <- mid_atl_ecor %>% 
   filter(US_L3NAME %in% c("Piedmont", "Northern Piedmont")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mid_atlantic_piedmont_2012") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "mid_atlantic_piedmont_2012")
 
 mid_atl_ridge <- mid_atl_ecor %>% 
   filter(US_L3NAME %in% c("Ridge and Valley", "Blue Ridge", "Northeastern Highlands")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mid_atlantic_ridge_valley_2012") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "mid_atlantic_ridge_valley_2012")
 
 mid_atl_glaciated <- mid_atl_ecor %>% 
   filter(US_L3NAME %in% c("Northern Allegheny Plateau", "Erie Drift Plain")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mid_atlantic_allegheny_plateau_glaciated_2012") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "mid_atlantic_allegheny_plateau_glaciated_2012")
 
 mid_atl_non_glaciated <- mid_atl_ecor %>% 
   filter(US_L3NAME %in% c("Central Appalachians", "Western Allegheny Plateau", "North Central Appalachians")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "mid_atlantic_allegheny_plateau_nonglaciated_2012") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "mid_atlantic_allegheny_plateau_nonglaciated_2012")
 
 mid_atl <- rbind(mid_atl_coastal_plain, mid_atl_glaciated, mid_atl_non_glaciated, mid_atl_pied, mid_atl_ridge)
 ```
@@ -279,47 +255,41 @@ atlantic_coastal_pine <- us_ecor_state %>%
   filter(STATE_NAME %in% c("Massachusetts", "New York", "Rhode Island")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "atlantic_coastal_pine_barrens_2018") %>% 
-  mutate(Notes = "Approved with reservations. Use alternate database if posssible")
+  mutate(FQA_database = "atlantic_coastal_pine_barrens_2018")
 
 eastern_great_lakes <- us_ecor_state %>% 
   filter(NA_L3CODE == "8.1.1") %>% 
   filter(STATE_NAME %in% c("New York", "Vermont")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "eastern_great_lakes_hudson_lowlands_2018") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "eastern_great_lakes_hudson_lowlands_2018") 
 
 maine_new_brunswick <- us_ecor_state %>% 
   filter(NA_L3CODE == "8.1.8") %>% 
   filter(STATE_NAME == "Maine") %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "maine_new_brunswick_2018") %>% 
-  mutate(Notes = "Approved with reservations. Use alternate database if posssible")
+  mutate(FQA_database = "maine_new_brunswick_2018")
 
 northeastern_coastal_zone <- us_ecor_state %>% 
   filter(NA_L3CODE == "8.1.7") %>% 
   filter(STATE_NAME %in% c("Connecticut", "Massachusetts", "Maine", "New Hampshire", "New York", "Rhode Island")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "northeastern_coastal_2018") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "northeastern_coastal_2018")
 
 northern_app_highlands <- us_ecor_state %>% 
   filter(NA_L3CODE == "5.3.1") %>% 
   filter(STATE_NAME %in% c("Connecticut", "Massachusetts", "Maine", "New Hampshire", "New York", "Vermont")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "northern_appalachian_atlantic_maritime_highlands_2018") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "northern_appalachian_atlantic_maritime_highlands_2018")
 
 texas_blackland <- us_ecor_state %>% 
   filter(NA_L3CODE == "9.4.7") %>% 
   tail(1) %>% 
   mutate(FQA_database = "texas_blackland_prairie_2019") %>% 
-  mutate(Notes = NA) %>% 
-  select(FQA_database, Notes)
+  select(FQA_database)
   
 ```
 
@@ -336,8 +306,7 @@ middle_rio_grande <- NM %>%
 middle_rio_grande <- middle_rio_grande[c(1,2),] %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "new_mexico_middle_rio_grande_2019") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "new_mexico_middle_rio_grande_2019")
 ```
 
 # Wisconsin (Wetland-Based FQA Lists)
@@ -353,15 +322,13 @@ wisconsin_MW_wetland_region <- wet_wis %>%
   filter(REGION.1 == "Midwest") %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "wisconsin_wetland_southwestern_southeastern_2017") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "wisconsin_wetland_southwestern_southeastern_2017")
 
 wisconsin_NCNE_wetland_region <- wet_wis %>% 
   filter(REGION.1 == "Northcentral and Northeast") %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "wisconsin_wetland_northern_southcentral_2017") %>% 
-  mutate(Notes = NA)
+  mutate(FQA_database = "wisconsin_wetland_northern_southcentral_2017")
 ```
 
 # Louisiana Coastal Zone (Louisiana department of natural resources shp)
@@ -372,8 +339,7 @@ http://www.dnr.louisiana.gov/index.cfm?md=pagebuilder&tmp=home&pid=928
 la <- st_read(here("ls_coastal_zone", "State_Coastal_Zone_Boundary.shp")) %>% 
   st_transform(crs = proj_crs) %>% 
   mutate(FQA_database = "louisiana_coastal_prairie_2006") %>% 
-  mutate(Notes = "Wetlands only") %>% 
-  select(geometry, FQA_database, Notes)
+  select(geometry, FQA_database)
 ```
 
 # Binding All Together
@@ -416,6 +382,12 @@ fqa_simplify <- regional_fqa_map %>%
   st_sf() %>% 
   st_make_valid()
 
+tmap_mode("view")
+
+tm_shape(fqa_simplify) +
+  tm_polygons("FQA_database") +
+  tmap_options(max.categories = 44)
+
 #simplify ecoregion and get outline
 ecor_simplify <- us_ecor %>%
   ms_simplify() %>% 
@@ -429,14 +401,16 @@ ecor_simplify <- us_ecor %>%
 fqa_coastline <- st_intersection(fqa_simplify, ecor_simplify)
 ```
 
-# Making Map 
+# Getting FQA Stats 
 
 ```{r}
-#read in data
-fqa_coastline <- read_sf(here("regional_fqa_simple.gpkg"))
-
 #load fqa_data
-fqas <- fqadata::fqa_db 
+fqas <- fqadata::fqa_db
+
+#read in notes
+fqa_notes <- read_csv(here("Regional_db_notes.csv")) %>% 
+  clean_names() %>% 
+  select(fqa_name_in_app, notes, recommendation)
 
 #get key stats
 fqa_grouped <- fqas %>% 
@@ -446,24 +420,23 @@ fqa_grouped <- fqas %>%
               length(unique(filter(pick(everything(.)), nativity == "native")$accepted_scientific_name)))
 
 #bind to sf 
-fqa_bind <- left_join(fqa_coastline, fqa_grouped, join_by(FQA_database == fqa_db))
+fqa_bind <- left_join(fqa_coastline, fqa_grouped, join_by(FQA_database == fqa_db)) %>% 
+  select(-ID)
 
-#native only
-native_only <- fqa_grouped %>% 
-  filter(total_species == total_native_species)
-
-
+#bind notes to sf
+fqa_bind_notes <- left_join(fqa_bind, fqa_notes, join_by("FQA_database" == fqa_name_in_app)) %>% 
+  rename(certification = recommendation)
 
 #save
-st_write(fqa_coastline, "regional_fqa_simple.gpkg", append = F)
+st_write(fqa_bind_notes, "regional_fqa_simple.gpkg", append = F)
 ```
 
 
 ```{r}
 tmap_mode("view")
 
-tm_shape(fqa_bind) +
-  tm_polygons("FQA_database", legend.show = F, popup.vars = c("Notes", "total_species", "total_native_species")) +
+tm_shape(fqa_bind_notes) +
+  tm_polygons("FQA_database", legend.show = F, popup.vars = c("notes", "total_species", "total_native_species", "certification")) +
   tmap_options(max.categories = 44)
 
 ```
