@@ -1,0 +1,65 @@
+---
+title: "FQA overlap map"
+author: "Iris Foxfoot"
+date: "2023-06-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sf)
+library(here)
+library(dplyr)
+library(rmapshaper)
+library(tigris)
+library(ggplot2)
+sf_use_s2(FALSE)
+```
+
+```{r}
+fqa_data <- read_sf(here("regional_fqa_simple.shp"))
+
+fqa_intersect <- st_intersection(fqa_data) %>%
+  st_buffer(dist = 0) %>% 
+  st_make_valid()
+
+fqa_clean <- fqa_intersect %>% 
+  filter(st_geometry_type(.) %in% c("MULTIPOLYGON", "POLYGON")) %>% 
+  mutate(area = st_area(.)) %>% 
+  filter(area > units::set_units(1, m^2)) %>% 
+  rowwise() %>% 
+  mutate(notes = list(fqa_data$notes[origins])) %>% 
+  mutate(notes = paste(notes, collapse = ', ')) %>% 
+  select(-c(origins))
+
+fqa_legend <- fqa_clean %>% 
+  mutate(notes = case_when(notes == "NA" ~ "One Full Coverage Database",
+                           notes == "Marsh Habitat" ~ "One Marsh Habitat Database",
+                           notes == "Wetlands Only" ~ "One Wetlands Database",
+                           notes == "Marsh Habitat, Excluding the Keys" ~ "One Full Coverage Database, One Marsh Habitat Database",
+                           notes == "Excluding the Keys" ~ "One Full Coverage Database",
+                           notes == "NA, NA" ~ "Two Full Coverage Databases",
+                           notes == "Wetlands Only, NA" ~ "One Full Coverage Database, One Wetlands Database",
+                           notes == "NA, Natives Only" ~ "One Full Coverage Database, One Native Plants Database",
+                           notes == "Natives Only" ~ "One Native Plants Database",
+                           notes == "NA, Wetlands Only" ~ "One Full Coverage Database, One Wetlands Database",
+                           notes == "Marsh Habitat, Wetlands Only" ~ "One Marsh Habitat Database, One Wetlands Habitat Database",
+                           notes == "Wetlands Only, Wetlands Only" ~ "Two Wetlands Databases",
+                           notes == "Marsh Habitat, Excluding the Keys, Wetlands Only" ~ "One Full Coverage Database, One Marsh Habitat Database, One Wetlands Database",
+                           notes == "Excluding the Keys, Wetlands Only" ~ "One Full Coverage Database, One Wetlands Database",
+                           notes == "NA, NA, NA" ~ "Three Full Coverage Databases",
+                           notes == "Wetlands Only, Coastal Marshes Only" ~ "One Marsh Habitat Database, One Wetlands Habitat Database",
+                           notes == "Coastal Marshes Only" ~ "One Coastal Marsh Habitat Database",
+                           T ~ notes
+                           ))
+
+  
+write_sf(fqa_legend, here("fqa_df.gpkg"))
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = fqa_clean, aes(fill =notes))
+```
+
+
