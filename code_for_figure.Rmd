@@ -30,7 +30,8 @@ fqa_clean <- fqa_intersect %>%
   rowwise() %>% 
   mutate(notes = list(fqa_data$notes[origins])) %>% 
   mutate(notes = paste(notes, collapse = ', ')) %>% 
-  select(-c(origins))
+  select(-c(origins)) %>% 
+  filter(notes != "NA, NA, NA")
 
 fqa_legend <- fqa_clean %>% 
   mutate(notes = case_when(notes == "NA" ~ "One Full Coverage Database",
@@ -58,8 +59,13 @@ write_sf(fqa_legend, here("fqa_df.gpkg"))
 ```
 
 ```{r}
-ggplot() +
-  geom_sf(data = fqa_clean, aes(fill =notes))
+unique(fqa_legend$notes)
+
+library(tmap)
+tmap_mode("view")
+
+tm_shape(fqa_legend) +
+    tm_polygons("notes")
 ```
 
 
