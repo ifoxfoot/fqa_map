@@ -10,13 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 library(sf)
 library(here)
 library(dplyr)
-library(rmapshaper)
 library(tigris)
-library(ggplot2)
-sf_use_s2(FALSE)
+library(rmapshaper)
 ```
 
+# Creating a Map with Info on Overlaps
+
 ```{r}
+sf_use_s2(FALSE)
 fqa_data <- read_sf(here("regional_fqa_simple.shp"))
 
 fqa_intersect <- st_intersection(fqa_data) %>%
@@ -58,14 +59,22 @@ fqa_legend <- fqa_clean %>%
 write_sf(fqa_legend, here("fqa_df.gpkg"))
 ```
 
+# Creating a Map with just Aggregate Outline
+
 ```{r}
-unique(fqa_legend$notes)
+states <- tigris::states()
 
-library(tmap)
-tmap_mode("view")
+fqa_data <- read_sf(here("regional_fqa_simple.shp"))
 
-tm_shape(fqa_legend) +
-    tm_polygons("notes")
+fqa_union <- st_union(fqa_data) %>% 
+  ms_simplify()
+
+fqa_intersect <- st_intersection(fqa_union, states) %>% 
+  st_buffer(dist = 0)
+
+plot(st_geometry(fqa_intersect))
+
+write_sf(fqa_intersect, here("fqa_outline.gpkg"))
 ```
 
 
