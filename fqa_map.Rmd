@@ -60,6 +60,8 @@ FQA_states <- states() %>%
 
 proj_crs <- st_crs(FQA_states)
 
+
+plot(st_geometry(FQA_states))
 ```
 
 # Read in Data
@@ -67,8 +69,10 @@ proj_crs <- st_crs(FQA_states)
 ```{r}
 #US level III ecoregions
 us_ecor <- st_read(here("us_eco_L3","us_eco_l3.shp")) %>%
-  st_make_valid %>% 
-  st_transform(crs = proj_crs)
+  st_make_valid()
+
+st_crs(us_ecor)
+
 
 #US level III ecoregions with states
 us_ecor_state <- st_read(here("us_eco_l3_state_boundaries",
@@ -425,10 +429,11 @@ fqa_bind <- left_join(fqa_coastline, fqa_grouped, join_by(FQA_database == fqa_db
 
 #bind notes to sf
 fqa_bind_notes <- left_join(fqa_bind, fqa_notes, join_by("FQA_database" == fqa_name_in_app)) %>% 
-  rename(certification = recommendation)
+  rename(certification = recommendation) %>% 
+  st_make_valid()
 
 #save
-st_write(fqa_bind_notes, "regional_fqa_simple.gpkg", append = F)
+st_write(fqa_bind_notes, "regional_fqa_simple.shp", append = F)
 ```
 
 
