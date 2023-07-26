@@ -77,4 +77,30 @@ plot(st_geometry(fqa_intersect))
 write_sf(fqa_intersect, here("fqa_outline.gpkg"))
 ```
 
+# Create a table of regiona fqa dbs
+
+```{r}
+library(fqadata)
+library(fqacalc)
+library(stringr)
+library(tidyverse)
+
+data <- fqadata::fqa_citations
+
+num_taxa <- fqadata::fqa_db %>% 
+  group_by(fqa_db, name_origin) %>% 
+  count() %>% 
+  filter(name_origin == "accepted_scientific_name")
+
+data_clean <- full_join(data, num_taxa, by = "fqa_db")  %>%
+  select(fqa_db, n) %>% 
+  rename(name = fqa_db) %>% 
+  separate(name, into = c("name", "year"), sep="_(?=[^_]+$)") %>% 
+  mutate(name = str_replace_all(name, "_", " ")) %>% 
+  mutate(name = str_to_title(name)) %>% 
+  rename(number_taxa = n)
+
+write_csv(data_clean, here("fqa_table.csv"))
+
+```
 

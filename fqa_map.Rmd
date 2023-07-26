@@ -59,9 +59,6 @@ FQA_states <- states() %>%
   select(FQA_database)
 
 proj_crs <- st_crs(FQA_states)
-
-
-plot(st_geometry(FQA_states))
 ```
 
 # Read in Data
@@ -69,16 +66,14 @@ plot(st_geometry(FQA_states))
 ```{r}
 #US level III ecoregions
 us_ecor <- st_read(here("us_eco_L3","us_eco_l3.shp")) %>%
+  st_transform(crs = proj_crs) %>% 
   st_make_valid()
-
-st_crs(us_ecor)
-
 
 #US level III ecoregions with states
 us_ecor_state <- st_read(here("us_eco_l3_state_boundaries",
                               "us_eco_l3_state_boundaries.shp")) %>%
-  st_make_valid %>% 
-  st_transform(crs = proj_crs)
+  st_transform(crs = proj_crs) %>% 
+  st_make_valid()
 
 #new mexico level IV ecoregions
 NM <- read_sf(here("nm_eco_l4", "nm_eco_l4_edit.shp")) %>% 
@@ -87,7 +82,8 @@ NM <- read_sf(here("nm_eco_l4", "nm_eco_l4_edit.shp")) %>%
 
 #USACE wetland delineation regions (for wisconsin)
 wetlands <- read_sf(here("USACE_Wetland_Delineation_Regions", "Regional_Supplements.shp")) %>% 
-  st_transform(crs = proj_crs)
+  st_transform(crs = proj_crs) %>% 
+  st_make_valid()
 ```
 
 # When FQA Regions are Counties
@@ -97,6 +93,7 @@ wetlands <- read_sf(here("USACE_Wetland_Delineation_Regions", "Regional_Suppleme
 #Mississippi
 ms <- counties(state = "Mississippi") %>% 
   filter(!NAME %in% c("Pear River", "Stone", "George", "Hancock", "Harrison", "Jackson")) %>% 
+  st_transform(crs = proj_crs) %>% 
   st_union %>% 
   st_sf() %>% 
   mutate(FQA_database = "mississippi_north_central_wetlands_2005")
@@ -104,7 +101,8 @@ ms <- counties(state = "Mississippi") %>%
 #exclude everglades
 south_florida <- counties(state = "Florida") %>% 
   filter(NAME %in% c("Charlotte", "Glades", "Martin", "Lee", "Hendry", 
-                     "Palm Beach", "Collier", "Broward", "Monroe", "Miami-Dade")) %>% 
+                     "Palm Beach", "Collier", "Broward", "Monroe", "Miami-Dade")) %>%
+  st_transform(crs = proj_crs) %>% 
   st_union() %>% 
   st_sf() %>% 
   mutate(FQA_database = "florida_south_2009")
@@ -115,6 +113,7 @@ chicago_region <- counties(state = c("Wisconsin", "Illinois", "Indiana", "Michig
   NAME %in% c( "Boone", "Cook", "DeKalb", "DuPage", "Grundy", "Kane", "Kankakee", "Kendall", "Lake", "McHenry", "Will") & STATEFP == 17 |
     NAME %in% c("Jasper", "Lake", "LaPorte", "Newton", "Porter", "St. Joseph", "Starke") & STATEFP == 18 |
     NAME  == "Berrien") %>% 
+  st_transform(crs = proj_crs) %>% 
     st_union() %>% 
     st_sf() %>% 
     mutate(FQA_database = "chicago_region_2017")
@@ -125,6 +124,7 @@ western_wa <- counties(state = "Washington") %>%
                      "Lewis", "Skamania", "Clark", "Cowlitz", "Wahkiakum",
                      "Thurston", "Kitsap", "Island", "San Juan", "Mason",
                      "Clallam", "Jefferson", "Grays Harbor", "Pacific")) %>% 
+  st_transform(crs = proj_crs) %>% 
       st_union() %>% 
       st_sf() %>% 
       mutate(FQA_database = "western_washington_2013")
@@ -133,8 +133,10 @@ eastern_wa <- counties(state = "Washington") %>%
   filter(!NAME %in% c("Whatcom", "Skagit", "Snohomish", "King", "Pierce", 
                      "Lewis", "Skamania", "Clark", "Cowlitz", "Wahkiakum",
                      "Thurston", "Kitsap", "Island", "San Juan", "Mason",
-                     "Clallam", "Jefferson", "Grays Harbor", "Pacific")) %>% 
+                     "Clallam", "Jefferson", "Grays Harbor", "Pacific")) %>%
+  st_transform(crs = proj_crs) %>% 
   st_make_valid()
+
 
 eastern_wa_eco <- st_intersection(eastern_wa, us_ecor)
 
@@ -318,7 +320,8 @@ middle_rio_grande <- middle_rio_grande[c(1,2),] %>%
 ```{r}
 #get state
 wisconsin <- states() %>% 
-  filter(NAME == "Wisconsin")
+  filter(NAME == "Wisconsin") %>% 
+  st_transform(crs = proj_crs)
 
 wet_wis <- st_intersection(wisconsin, wetlands)
 
@@ -350,55 +353,60 @@ la <- st_read(here("ls_coastal_zone", "State_Coastal_Zone_Boundary.shp")) %>%
 
 ```{r}
 regional_fqa_map <- rbind(
-                          FQA_states,
-                          ms,
-                          south_florida,
-                          chicago_region,
-                          western_wa,
-                          eastern_wa_mt,
-                          eastern_wa_columbia_basin,
-                          dakotas,
-                          pen_piedmont,
-                          mid_atl,
-                          appalachian_mtn,
-                          atlantic_coastal_pine,
-                          coastal_plain_southeast,
-                          eastern_great_lakes,
-                          southern_coastal_plain,
-                          interior_plateau,
-                          maine_new_brunswick,
-                          northeastern_coastal_zone,
-                          northern_app_highlands,
-                          piedmont_region,
-                          texas_blackland, 
-                          middle_rio_grande,
-                          wisconsin_MW_wetland_region,
-                          wisconsin_NCNE_wetland_region,
-                          la
-                          ) %>% 
-  st_make_valid()
+  FQA_states,
+  ms,
+  south_florida,
+  chicago_region,
+  western_wa,
+  eastern_wa_mt,
+  eastern_wa_columbia_basin,
+  dakotas,
+  pen_piedmont,
+  mid_atl,
+  appalachian_mtn,
+  atlantic_coastal_pine,
+  coastal_plain_southeast,
+  eastern_great_lakes,
+  southern_coastal_plain,
+  interior_plateau,
+  maine_new_brunswick,
+  northeastern_coastal_zone,
+  northern_app_highlands,
+  piedmont_region,
+  texas_blackland,
+  middle_rio_grande,
+  wisconsin_MW_wetland_region,
+  wisconsin_NCNE_wetland_region,
+  la
+) %>% 
+  st_make_valid() %>% 
+  st_transform(crs = proj_crs)
 
 
 #simplify
 fqa_simplify <- regional_fqa_map %>% 
   mutate(ID = rownames(.)) %>% 
-  ms_simplify() %>% 
-  st_sf() %>% 
+  ms_simplify(keep = 0.01) %>% 
   st_make_valid()
+```
 
+
+```{r}
 tmap_mode("view")
 
-tm_shape(fqa_simplify) +
-  tm_polygons("FQA_database") +
-  tmap_options(max.categories = 44)
 
+tm_shape(fqa_simplify) +
+tm_polygons("FQA_database", legend.show = FALSE) +
+tmap_options(max.categories = 44)
+```
+
+
+```{r}
 #simplify ecoregion and get outline
 ecor_simplify <- us_ecor %>%
-  ms_simplify() %>% 
-  st_sf() %>% 
+  ms_simplify(keep = 0.01) %>% 
   st_make_valid() %>% 
   st_union() %>% 
-  st_sf() %>% 
   st_make_valid()
 
 #clip fqa map by ecoregion outline to eliminate coastline
@@ -409,7 +417,8 @@ fqa_coastline <- st_intersection(fqa_simplify, ecor_simplify)
 
 ```{r}
 #load fqa_data
-fqas <- fqadata::fqa_db
+library(fqadata)
+fqas <- fqa_db
 
 #read in notes
 fqa_notes <- read_csv(here("Regional_db_notes.csv")) %>% 
@@ -433,7 +442,7 @@ fqa_bind_notes <- left_join(fqa_bind, fqa_notes, join_by("FQA_database" == fqa_n
   st_make_valid()
 
 #save
-st_write(fqa_bind_notes, "regional_fqa_simple.shp", append = F)
+st_write(fqa_bind_notes, "shapefiles_written/regional_fqa_simple.shp", append = F)
 ```
 
 
