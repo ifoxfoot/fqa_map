@@ -182,7 +182,7 @@ coastal_plain_southeast <- us_ecor_state %>%
   filter(STATE_NAME %in% c("Kentucky", "Tennessee", "Mississippi", "Alabama", "North Carolina", "South Carolina", "Georgia", "Florida")) %>% 
   st_union() %>% 
   st_sf() %>% 
-  mutate(FQA_database = "coastal_plain_2013")
+  mutate(FQA_database = "coastal_plain_southeast_2013")
 
 southern_coastal_plain <- us_ecor_state %>% 
   filter(US_L3CODE == "75") %>% 
